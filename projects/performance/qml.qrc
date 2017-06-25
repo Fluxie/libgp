@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>Charts.qml</file>
+        <file>qtquickcontrols2.conf</file>
+        <file>PieChart.qml</file>
+        <file>Statistics.qml</file>
+        <file>Title.qml</file>
+        <file>ChartsControl.qml</file>
+        <file>TextValue.qml</file>
+    </qresource>
+</RCC>
