@@ -16,6 +16,18 @@ Rectangle {
         name: "Allocations"
     }
 
+    TextValue {
+        id: allocationsPerSecond
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: allocations.bottom
+        }
+        height: 20
+        name: "Allocations / s"
+    }
+
+
 
     ListModel {
         id: customDataModel
@@ -29,7 +41,7 @@ Rectangle {
         anchors {
             left: parent.left
             right: parent.right
-            top: allocations.bottom
+            top: allocationsPerSecond.bottom
             bottom: parent.bottom
         }
 
@@ -58,6 +70,11 @@ Rectangle {
         // Update the number of allocations.
         if( content.allocations )
             allocations.value = content.allocations;
+
+        if( content.started && content.current ) {
+            var secondsSinceStart = ( content.current - content.started ) / 1000;
+            allocationsPerSecond.value = Math.floor( content.allocations / secondsSinceStart );
+        }
 
         var customData = content.customData;
         for( var dataItem in customData )

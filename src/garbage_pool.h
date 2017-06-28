@@ -14,6 +14,7 @@
 
 #include "atomic_statistics.h"
 #include "configuration.h"
+#include "details/deallocation_group.h"
 #include "queued_item.h"
 #include "statistics.h"
 
@@ -43,6 +44,12 @@ private:
     // Groups of objects marked for deallocation.
     struct group
     {
+
+        group() :
+            m_epoch( 0 )
+        {
+        }
+
         group(
                 gp::configuration::epoch_t epoch,
                 std::initializer_list< queued_item > items  //!< Items assigned for dellocation.
@@ -59,7 +66,7 @@ private:
             m_epoch( epoch )
         {
             m_items = std::move( items );
-        }
+        }                
 
 
         //! Deallocates all the items in this group.
@@ -74,7 +81,7 @@ private:
         std::vector< gp::queued_item > m_items;  //!< Items assigned for dellocation.
     };
 
-    typedef std::list< group > pool_t;
+    typedef std::list< gp::details::deallocation_group > pool_t;
 
 public:
 
@@ -135,6 +142,7 @@ private:
 
     std::mutex m_statisticsGuard;  //!< Protects access to the statistics.
     atomic_statistics m_statistics;  //!< Statistics collected from the participants.
+    atomic_statistics m_retiredStatistics;  //!< Statistics collected from retired participants.
 
     std::mutex m_poolGuard;
     pool_t m_pool;  //!< Objects marked for dellocation that were moved here from the local garbage pool participants.

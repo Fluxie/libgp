@@ -3,50 +3,10 @@
 
 
 PlainAllocator::PlainAllocator(
-        std::string title
+        const std::string& title
 ) :
-    m_title( title ),
-    m_running( false )
+    AllocationTest( title )
 {
-    // Reset counters.
-    for( std::atomic< uint32_t >& c : m_counters )
-        c.store( 0 );
-}
-
-//! Starts allocations.
-void PlainAllocator::start(
-        unsigned int threads
-)
-{
-    // Start.
-    m_running = true;
-
-    for( unsigned int t = 0; t < threads; ++t )
-        m_allocators.emplace_back( allocationAlgorithm, this, t );
-}
-
-
-//! Stops Allocations.
-void PlainAllocator::stop()
-{
-    // Request stop.
-    m_running = false;
-
-    // Wait for the threads to stop.
-    for( std::thread& t : m_allocators )
-        t.join();
-}
-
-double PlainAllocator::allocations() const
-{
-    // Calculate a sum of the results.
-    // It does not need to be accurate => memory_order_relaxed.
-    double result = 0.0;
-    for( auto& counter : m_counters )
-    {
-        result += counter.load( std::memory_order_relaxed );
-    }
-    return result;
 }
 
 CustomData PlainAllocator::data() const
@@ -55,30 +15,40 @@ CustomData PlainAllocator::data() const
     return CustomData();
 }
 
-void PlainAllocator::allocationAlgorithm(
-        PlainAllocator* thisParam,
-        size_t index
+//! Called when the test round begins.
+void PlainAllocator::beginTestRound()
+{
+
+}
+
+//! Allocates the objects.
+void PlainAllocator::allocate(
+        int count,  //!< Number of objects to allocate.
+        std::vector< std::vector< std::thread::id >* >& allocations
 )
 {
-    std::vector< std::vector< std::thread::id >* > allocations;
-    while( thisParam->m_running )
-    {
+    for( int c = 0; c < count; c++ )
+        allocations.emplace_back( new std::vector< std::thread::id >( 5, std::this_thread::get_id() ) );
+}
 
-        // Allocate 100 objects.
-        {
-            for( int c = 0; c < 100; c++ )
-                allocations.emplace_back( new std::vector< std::thread::id >( 5, std::this_thread::get_id() ) );
-            thisParam->m_counters[ index ].fetch_add( 100, std::memory_order_relaxed );
-        }
+//! Deallocates the objects.
+void PlainAllocator::deallocate(
+        std::vector< std::vector< std::thread::id >* >& allocations
+)
+{
+    for( std::vector< std::thread::id >* a : allocations )
+        delete a;
+    allocations.clear();
+}
 
-        // Publish.
-        {
+//! Called when the test round ends.
+void PlainAllocator::endTestRound()
+{
 
-        }
+}
 
-        // Deallocate
-        for( std::vector< std::thread::id >* a : allocations )
-            delete a;
-        allocations.clear();
-    }
+//! Called when the test ends.
+void PlainAllocator::endTest()
+{
+
 }

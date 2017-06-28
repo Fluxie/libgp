@@ -2,6 +2,8 @@
 
 DataPacket::DataPacket( QObject *parent ) :
     QObject( parent ),
+    m_started( 0 ),
+    m_current( 0 ),
     m_allocations( 0 )
 {
 
@@ -14,6 +16,8 @@ DataPacket::DataPacket(
 ) :
     QObject( parent ),
     m_title( source->m_title ),
+    m_started( source->m_started ),
+    m_current( source->m_current ),
     m_allocations( source->m_allocations ),
     m_customData( source->m_customData )
 {

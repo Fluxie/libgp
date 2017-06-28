@@ -1,57 +1,45 @@
 #ifndef REFERENCECOUNTER_H
 #define REFERENCECOUNTER_H
 
-#include <array>
-#include <atomic>
-#include <string>
-#include <thread>
-#include <vector>
 
-#include "idatasource.h"
+#include "allocationtest.h"
 
-class ReferenceCounter: public IDataSource
+class ReferenceCounter: public AllocationTest< std::shared_ptr< std::vector< std::thread::id > > >
 {
 public:
 
     ReferenceCounter(
-            std::string title
+            const std::string& title
     );
-
-    //! Starts allocations.
-    void start(
-            unsigned int threads
-    );
-
-    //! Stops Allocations.
-    void stop();
 
 // IDataSource
 public:
 
-    //! Gets the title of the data source.
-    virtual std::string title() const { return m_title; }
-
-    //! Retrieves the number of allocations done so far.
-    virtual double allocations() const;
-
     //! Custom data.
     virtual CustomData data() const;
 
-private:
+protected:
 
-    //! Algorithm for the test.
-    static void allocationAlgorithm(
-            ReferenceCounter* thisParam,
-            size_t index
+    //! Called when the test round begins.
+    virtual void beginTestRound();
+
+    //! Allocates the objects.
+    virtual void allocate(
+            int count,  //!< Number of objects to allocate.
+            std::vector< std::shared_ptr< std::vector< std::thread::id > > >& allocations
     );
 
-private:
+    //! Deallocates the objects.
+    virtual void deallocate(
+            std::vector< std::shared_ptr< std::vector< std::thread::id > > >& allocations
+    );
 
-    std::string m_title;
-    std::array< std::atomic< uint32_t >, 32 > m_counters;  //!< Allocation counter for each thread.
+    //! Called when the test round ends.
+    virtual void endTestRound();
 
-    std::atomic< bool > m_running;
-    std::vector< std::thread > m_allocators;  //!< Threads doing the work.
+    //! Called when the test ends.
+    virtual void endTest();
+
 };
 
 #endif // REFERENCECOUNTER_H

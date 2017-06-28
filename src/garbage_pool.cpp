@@ -55,6 +55,10 @@ void garbage_pool::unregister_participant(
     std::unique_lock<std::mutex> lock( m_registerGuard );
 
     m_participants.erase( participant );
+
+    // Update statistics.
+    statistics s = participant->statistics();
+    m_retiredStatistics.fetch_add( s );
 }
 
 //! Accesses the global garbage pool.
@@ -76,7 +80,7 @@ void garbage_pool::update_last_active()
     {
         std::unique_lock<std::mutex> lock( m_registerGuard );
 
-        m_statistics.reset();
+        m_statistics.reset( m_retiredStatistics );
         for( auto& participant : m_participants )
         {
             epoch_t participantEpoch = participant->epoch();

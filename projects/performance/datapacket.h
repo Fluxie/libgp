@@ -1,6 +1,7 @@
 #ifndef DATAPACKET_H
 #define DATAPACKET_H
 
+#include <QDateTime>
 #include <QObject>
 #include <QString>
 #include <QVariant>
@@ -12,11 +13,15 @@ class DataPacket : public QObject
 {
     Q_OBJECT
     Q_PROPERTY( QString title READ title WRITE setTitle NOTIFY titleChanged )
+    Q_PROPERTY( double started READ started WRITE setStarted NOTIFY startedChanged )
+    Q_PROPERTY( double current READ current WRITE setCurrent NOTIFY currentChanged )
     Q_PROPERTY( double allocations READ allocations WRITE setAllocations NOTIFY allocationsChanged )
     Q_PROPERTY( QVariantMap customData READ customData NOTIFY customDataChanged )
 public:
 
-    explicit DataPacket(QObject *parent = nullptr);
+    explicit DataPacket(
+            QObject *parent = nullptr
+    );
 
     //! Initializes a copy of an existing packet.
     explicit DataPacket(
@@ -27,32 +32,14 @@ public:
     //! Initializes the
     void initialize();
 
-    //! Sets the title.
-    void setTitle(
-            const QString& title
-    )
-    {
-        if( m_title != title )
-        {
-            m_title = title;
-            emit titleChanged();
-        }
-    }
-
     //! Gets the title.
     QString title() const { return m_title; }
 
-    void setAllocations(
-            double value
-    )
-    {
-        // Changed?
-        if( value != m_allocations )
-        {
-            m_allocations = value;
-            emit allocationsChanged();
-        }
-    }
+    //! Timepoint in milliseconds when the testing started
+    double started() const { return m_started; }
+
+    //! The current time in milliseconds, only usefule whe
+    double current() const { return m_current; }
 
     double allocations() const
     {
@@ -69,10 +56,58 @@ public:
 signals:
 
     void titleChanged();
+    void startedChanged();
+        void currentChanged();
     void allocationsChanged();
     void customDataChanged();
 
 public slots:
+
+    //! Sets the title.
+    void setTitle(
+            const QString& title
+    )
+    {
+        if( m_title != title )
+        {
+            m_title = title;
+            emit titleChanged();
+        }
+    }
+
+    void setStarted(
+            const double& started
+    )
+    {
+        if( m_started != started )
+        {
+            m_started = started;
+            emit startedChanged();
+        }
+    }
+
+    void setCurrent(
+            const double& current
+    )
+    {
+        if( m_current != current )
+        {
+            m_current = current;
+            emit currentChanged();
+        }
+    }
+
+    void setAllocations(
+            double value
+    )
+    {
+        // Changed?
+        if( value != m_allocations )
+        {
+            m_allocations = value;
+            emit allocationsChanged();
+        }
+    }
 
 // Support move.
 public:
@@ -109,7 +144,9 @@ private:
 
 private:
 
-    QString m_title;
+    QString m_title;  //!< The title of the data source that produced this packet.
+    double m_started;  //!< When the data source was started.
+    double m_current;  //!< The current time.
     double m_allocations;
     QVariantMap m_customData;
 };

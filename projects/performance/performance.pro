@@ -18,7 +18,9 @@ SOURCES += main.cpp \
     customdata.cpp \
     datamodel.cpp \
     plainallocator.cpp \
-    referencecounter.cpp
+    referencecounter.cpp \
+    allocationtest.cpp \
+    ../../src/details/deallocation_group.cpp
 
 RESOURCES += qml.qrc
 
@@ -63,4 +65,7 @@ HEADERS += \
     testobjects.h \
     datamodel.h \
     plainallocator.h \
-    referencecounter.h
+    referencecounter.h \
+    allocationtest.h \
+    ../../src/details/deallocation_group.h \
+    ../../src/details/types.h

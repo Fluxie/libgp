@@ -3,6 +3,7 @@
 #include <QQmlContext>
 #include <QQuickView>
 
+#include <iostream>
 #include <thread>
 #include <malloc.h>
 
@@ -20,7 +21,7 @@ int main(int argc, char *argv[])
 {
     gp::unregister_thread();
 
-    bool gui = true;
+    bool gui = false;
 //    int arenas = mallopt( M_ARENA_MAX, 1 );
 //    if( arenas == 0 )
 //        std::terminate();
@@ -53,10 +54,11 @@ int main(int argc, char *argv[])
     }
 
     // Start test.
-    unsigned int threads = std::thread::hardware_concurrency() / 3 - 1;
+    unsigned int threadsForTesting = std::thread::hardware_concurrency() - 2;
+    unsigned int threads = 4;
     gpa1.start( threads );
-    plain.start( threads );
-    ref.start( threads );
+     // plain.start( threads );
+     // ref.start( threads );
 
     // Display GUI?
     int result = 0;
@@ -76,7 +78,7 @@ int main(int argc, char *argv[])
         // Show GUI.
         result = app.exec();
     }
-    else
+    else   
         std::this_thread::sleep_for( 15s );
 
     // Stop to monitor and the algorithm.
@@ -84,6 +86,14 @@ int main(int argc, char *argv[])
         monitor.stop();
     gpa1.stop();
     plain.stop();
+    ref.stop();
+
+    // Ensure we will observe the statistics correctly in this thread.
+    std::this_thread::sleep_for( 2s );
+
+    // Print statistics.
+    gp::statistics s = gp::get_statistics();
+    std::cout << "Completed: " << s.completed_dellocations() << std::endl;
 
     // Return the result.
     return result;

@@ -35,8 +35,10 @@ public:
         m_completedDeallocations.fetch_add( deallocations, std::memory_order_relaxed );
     }
 
-    //! Resets the statistics.
-    void reset();
+    //! Resets the statistics from the given set of other statistics.
+    void reset(
+            const statistics& s
+    );
 
     //! Updates the statistics from the given statistics collection.
     void fetch_add(

@@ -9,6 +9,7 @@ garbage_pool_participant::garbage_pool_participant(
         std::shared_ptr< garbage_pool > pool
 ) :
     m_pool( pool ),
+    m_oldestLocalEpoch( 0 ),
     m_localEpoch( 0 )
 {
     m_pool->register_participant( this );
@@ -50,19 +51,28 @@ size_t garbage_pool_participant::clean(
     if( mode == cleanup::after_update )
         m_pool->update_last_active();
 
-    // Clean all entries in the pool that are older than the last active epoch.
-    // TODO: The groups in the pool are naturally ordered, no need to loop through them all.
+    // Check the olders epoch quickly.
     garbage_pool::epoch_t lastActive = m_pool->last_active();
-    for( pool_t::iterator group = m_localPool.begin(); group != m_localPool.end();  )
+    if( m_oldestLocalEpoch > lastActive )
+        return m_localPool.size();
+
+    // Clean all entries in the pool that are older than the last active epoch.
+    // TODO: The groups in the pool are naturally ordered, no need to loop through them all.    
+    for( pool_t::iterator itr = m_localPool.begin(); itr != m_localPool.end();  )
     {
-        if( group->m_epoch <= lastActive )
+        group_t& group = *itr;
+        if( group.epoch() <= lastActive )
         {
-            m_statistics.deallocations_completed( group->m_items.size() );
-            group->dellocate();
-            group = m_localPool.erase( group );
+            m_statistics.deallocations_completed( group.queued() );
+            group.dellocate();
+            m_cachedGroups.push_back( std::move( group ) );
+            itr = m_localPool.erase( itr );
         }
         else
+        {
+            m_oldestLocalEpoch = group.epoch();
             break;
+        }
     }
     return m_localPool.size();
 }

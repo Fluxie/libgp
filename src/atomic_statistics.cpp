@@ -11,10 +11,12 @@ atomic_statistics::atomic_statistics() :
 
 }
 
-void atomic_statistics::reset()
+void atomic_statistics::reset(
+        const statistics& s
+)
 {
-    m_queuedDeallocations.store( 0, std::memory_order_relaxed  );
-    m_completedDeallocations.store( 0, std::memory_order_relaxed  );
+    m_queuedDeallocations.store( s.queued_dellocations(), std::memory_order_relaxed  );
+    m_completedDeallocations.store( s.completed_dellocations(), std::memory_order_relaxed  );
 }
 
 void atomic_statistics::fetch_add(
