@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 {
     gp::unregister_thread();
 
-    bool gui = false;
+    bool gui = true;
 //    int arenas = mallopt( M_ARENA_MAX, 1 );
 //    if( arenas == 0 )
 //        std::terminate();
@@ -54,11 +54,14 @@ int main(int argc, char *argv[])
     }
 
     // Start test.
-    unsigned int threadsForTesting = std::thread::hardware_concurrency() - 2;
-    unsigned int threads = 4;
+    unsigned int threadsForTesting = ( std::thread::hardware_concurrency() - 2 ) / 3;
+    unsigned int threadsForProfiling = 4;
+    unsigned int oneThread = 1;
+
+    unsigned int threads = threadsForTesting;
     gpa1.start( threads );
-     // plain.start( threads );
-     // ref.start( threads );
+    plain.start( threads );
+    ref.start( threads );
 
     // Display GUI?
     int result = 0;

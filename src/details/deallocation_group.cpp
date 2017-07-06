@@ -1,67 +1,55 @@
 #include "deallocation_group.h"
 
+#include <algorithm>
+#include <vector>
+
 namespace gp
 {
 namespace details
 {
 
-deallocation_group::deallocation_group() :
-    m_epoch( 0 )
-{
-    m_items.reserve( deallocation_group::preferred_maximum );
+deallocation_group::deallocation_group()
+{  
 }
 
 //! Appends new items for deallocation.
-bool deallocation_group::append(
+size_t deallocation_group::append(
         gp::configuration::epoch_t epoch,
+        gp::details::deallocation_group_header& header,
         std::initializer_list< queued_item > items
 )
 {
     // Collect.
-    m_epoch = epoch;
-    for( queued_item qi : items )
-        m_items.push_back( std::move( qi ) );
+    header.set_epoch( epoch );
+    std::initializer_list< queued_item >::iterator last = items.begin() + std::min( header.size(), items.size() );
+    for( std::initializer_list< queued_item >::iterator c = items.begin();
+            c != items.end(); ++c )
+    {
+        m_buffer.items[ header.next() ] = (*c);
+    }
 
-    // Are we full?
-    bool full = m_items.size() >= deallocation_group::preferred_maximum - 10;
-    return full;
+    // Return the number of appended items.
+    return last - items.begin();
 }
 
 //! Appends new items for deallocation. Returns true if the group becomes full.
-bool deallocation_group::append(
+size_t deallocation_group::append(
         gp::configuration::epoch_t epoch,
+        gp::details::deallocation_group_header& header,
         std::vector< queued_item >&& items
 )
 {
     // Collect.
-    m_epoch = epoch;
-    for( queued_item& qi : items )
-        m_items.push_back( std::move( qi ) );
-
-    // Are we full?
-    bool full = m_items.size() >= deallocation_group::preferred_maximum;
-    return full;
-}
-
-deallocation_group::deallocation_group(
-        deallocation_group&& other
-)  noexcept :
-    m_epoch( other.m_epoch ),
-    m_items( std::move( other.m_items ) )
-{
-
-}
-
-deallocation_group& deallocation_group::operator=(
-        deallocation_group&& other
-)  noexcept
-{
-    if( this != &other )
+    header.set_epoch( epoch );
+    std::vector< queued_item >::iterator last = items.begin() + std::min( header.size(), items.size() );
+    for( std::vector< queued_item >::iterator c = items.begin();
+            c != items.end(); ++c )
     {
-        m_epoch = other.m_epoch;
-        m_items = std::move( other.m_items );
+        m_buffer.items[ header.next() ] = std::move( *c );
     }
-    return *this;
+
+    // Return the number of appended items.
+    return last - items.begin();
 }
 
 }

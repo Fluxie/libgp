@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "garbage_pool.h"
+#include "details/deallocation_buffer.h"
 #include "details/deallocation_group.h"
 #include "details/has_deallocate.h"
 #include "statistics.h"
@@ -29,9 +30,6 @@ class garbage_pool_participant
 {
     //! Storage type for the group pointer.
     typedef gp::details::deallocation_group group_t;
-
-    //! Definition for  a pool of objects waiting for deallocation.
-    typedef std::deque< group_t > pool_t;
 
 public:
 
@@ -104,7 +102,7 @@ public:
     {
         // Collect the items for dellocation.queued_item
         m_statistics.deallocations_queued( items.size() );
-        stage_for_deallocation( epoch, items );
+        m_localPool.append( epoch, items );
     }
 
     //! Marks the specified items for dellocation.
@@ -115,11 +113,11 @@ public:
     {
         // Collect the items for dellocation.
         m_statistics.deallocations_queued( items.size() );
-        stage_for_deallocation( epoch, std::forward< std::vector< queued_item > >( items ) );
+        m_localPool.append( epoch, std::forward< std::vector< queued_item > >( items ) );
     }
 
     //! Attempts to clean the local pool.
-    size_t clean(
+    void clean(
             cleanup mode = cleanup::known
     );
     //! Gets the statistics.
@@ -130,55 +128,6 @@ public:
 
 private:
 
-    //! Stages items for deallocation.
-    void stage_for_deallocation(
-            garbage_pool::epoch_t epoch,
-            std::initializer_list< queued_item > items
-    )
-    {
-        // Append the items to stating.
-        bool full = m_stagingGroup.append( epoch, items );
-
-        // Rotate the current staging area?
-        if( full )
-        {
-            m_localPool.push_back( std::move( m_stagingGroup ) );
-            m_stagingGroup = get_fresh_group();
-        }
-    }
-
-    void stage_for_deallocation(
-            garbage_pool::epoch_t epoch,
-            std::vector< queued_item >&& items
-    )
-    {
-        // Append the items to stating.
-        bool full = m_stagingGroup.append( epoch, std::forward< std::vector< queued_item > >( items ) );
-
-        // Rotate the current staging area?
-        if( full )
-        {
-            m_localPool.push_back( std::move( m_stagingGroup ) );
-            m_stagingGroup = get_fresh_group();
-        }
-    }
-
-    //! Stages items for dellocation
-    group_t get_fresh_group()
-    {
-        // Get a new group for the queued items for dellocating them.
-        if( m_cachedGroups.empty() )
-            return group_t();
-        else
-        {
-            group_t group = std::move( m_cachedGroups[ m_cachedGroups.size() - 1 ] );
-            m_cachedGroups.pop_back();
-            return group;
-        }
-    }
-
-private:
-
     //! Initializes the participant and associated the participant with the global pool.
     garbage_pool_participant();
 
@@ -186,10 +135,7 @@ private:
     garbage_pool::epoch_t m_oldestLocalEpoch;  //!< Holds the oldes local epoch.
 
     std::atomic< garbage_pool::epoch_t > m_localEpoch;
-    pool_t m_localPool;  //!< Collection of items waiting to be deallocated.
-
-    group_t m_stagingGroup;  //!< Group for collecting the queued items.
-    std::vector< group_t > m_cachedGroups;  //!< A collections of queued items used previously.
+    gp::details::deallocation_buffer m_localPool;  //!< Collection of items waiting to be deallocated.
 
     atomic_statistics m_statistics;  //!< Collects statistics about the usage.
 

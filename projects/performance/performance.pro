@@ -20,7 +20,8 @@ SOURCES += main.cpp \
     plainallocator.cpp \
     referencecounter.cpp \
     allocationtest.cpp \
-    ../../src/details/deallocation_group.cpp
+    ../../src/details/deallocation_group.cpp \
+    ../../src/details/deallocation_buffer.cpp
 
 RESOURCES += qml.qrc
 
@@ -68,4 +69,6 @@ HEADERS += \
     referencecounter.h \
     allocationtest.h \
     ../../src/details/deallocation_group.h \
-    ../../src/details/types.h
+    ../../src/details/types.h \
+    ../../src/details/deallocation_buffer.h \
+    ../../src/details/deallocation_group_header.h

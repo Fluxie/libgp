@@ -3,14 +3,13 @@
 
 #include "../configuration.h"
 #include "../queued_item.h"
+#include "deallocation_group_header.h"
 
+#include <array>
 #include <memory>
-#include <vector>
 
-namespace  gp
-{
 
-namespace details
+namespace  gp { namespace details
 {
 
 //! Represents a group of objects marked for deallocation.
@@ -18,38 +17,90 @@ class deallocation_group
 {
 private:
 
-    //! The preferred number of items for each group.
-    static const size_t preferred_maximum = 1000;
+    //! Maximum size for the buffer.
+    static constexpr size_t buffer_size = ( gp::configuration::deallocation_group_size - sizeof( deallocation_group_header ) );
+
+    //! Maximum number of items stored in one group.
+    static constexpr size_t maximum_item_count = buffer_size / sizeof( queued_item );
+
+    union buffer {
+        unsigned char bufferSize[ buffer_size ];
+        gp::queued_item items[ maximum_item_count ];
+
+        buffer() {}
+    };
 
 public:
 
     deallocation_group();
 
+    //! Returns the epoch of the group.
+    gp::configuration::epoch_t epoch() const noexcept { return m_header.epoch(); }
+
+    //! Resets the groups.
+    void reset() noexcept { m_header.clear(); }
+
     //! Appends new items for deallocation. Returns true if the group becomes full.
-    bool append(
+    size_t append(
             gp::configuration::epoch_t epoch,
+            gp::details::deallocation_group_header& header,
             std::initializer_list< queued_item > items
     );
 
-    //! Appends new items for deallocation. Returns true if the group becomes full.
-    bool append(
+    //! Appends new items for deallocation. Returns the number of appended
+    size_t append(
             gp::configuration::epoch_t epoch,
+            gp::details::deallocation_group_header& header,
             std::vector< queued_item >&& items
     );
 
-    //! Gets the epoch of the youngest item in the group.
-    gp::configuration::epoch_t epoch() const noexcept { return m_epoch; }
+    //! Appends items to the group.
+    template< typename t_iterator >
+    size_t append(
+            gp::configuration::epoch_t epoch,
+            t_iterator begin,
+            t_iterator end
+    )
+    {
+        // Collect.
+        m_header.set_epoch( epoch );
+        t_iterator last = begin + std::min( maximum_item_count - m_header.size(), ( size_t ) std::distance( begin, end ) );
+        for( t_iterator c = begin;c != last; ++c )
+        {
+            (*this)[ m_header.next() ] = (*c);
+        }
 
-    //! Returns the number items queued for excution.
-    size_t queued() const noexcept { return m_items.size(); }
+        // Return the number of appended items.
+        size_t count = last - begin;
+        return count;
+    }
 
-    //! Deallocates all the items in this group.
-    void dellocate()
+    //! Deallocates all the items in this group. Returns the number of deallocated items.
+    size_t dellocate() noexcept
     {
         // Deallocate.
-        for( queued_item& qi : m_items )
+        for( int i = 0; i <= m_header.slot(); ++i )
+        {
+            gp::queued_item& qi = m_buffer.items[ i ];
             qi.m_deallocate( qi.m_object );
-        m_items.clear();
+        }
+
+        size_t count = m_header.size();
+        m_header.clear();
+        return count;
+    }
+
+    //! Deallocates all the items in this group. Assumes the group is full.
+    size_t dellocate_full() noexcept
+    {
+        // Deallocate.
+        for( size_t st = 0; st < maximum_item_count ; ++st )
+        {
+            gp::queued_item& qi = m_buffer.items[ st ];
+            qi.m_deallocate( qi.m_object );
+        }
+        m_header.clear();
+        return gp::configuration::deallocation_group_size ;        
     }
 
 // Support moves.
@@ -57,11 +108,11 @@ public:
 
     deallocation_group(
             deallocation_group&&
-    ) noexcept;
+    ) noexcept = delete;
 
     deallocation_group& operator=(
             deallocation_group&&
-    ) noexcept;
+    ) noexcept = delete;
 
 // Prevent copying.
 public:
@@ -74,12 +125,22 @@ public:
     //! Prevent regular assignment.
     deallocation_group& operator=(
             const deallocation_group&
-    ) = delete;
+    ) = delete;       
 
 private:
 
-    gp::configuration::epoch_t m_epoch;  //!< The epoch of the youngest item in the group.
-    std::vector< gp::queued_item > m_items;  //!< Items marked for dellocation.
+    //! Returns a referencto to an item.
+    queued_item& operator[](
+            int index
+    ) noexcept
+    {
+        return m_buffer.items[ index ];
+    }
+
+private:
+
+    deallocation_group_header m_header;
+    buffer m_buffer;  //!< Items marked for dellocation.
 };
 
 }

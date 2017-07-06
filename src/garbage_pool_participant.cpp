@@ -43,7 +43,7 @@ void garbage_pool_participant::safe_zone()
 }
 
 //! Attempts to clean the local pool.
-size_t garbage_pool_participant::clean(
+void garbage_pool_participant::clean(
         cleanup mode
 )
 {
@@ -54,27 +54,12 @@ size_t garbage_pool_participant::clean(
     // Check the olders epoch quickly.
     garbage_pool::epoch_t lastActive = m_pool->last_active();
     if( m_oldestLocalEpoch > lastActive )
-        return m_localPool.size();
+        return;
 
-    // Clean all entries in the pool that are older than the last active epoch.
-    // TODO: The groups in the pool are naturally ordered, no need to loop through them all.    
-    for( pool_t::iterator itr = m_localPool.begin(); itr != m_localPool.end();  )
-    {
-        group_t& group = *itr;
-        if( group.epoch() <= lastActive )
-        {
-            m_statistics.deallocations_completed( group.queued() );
-            group.dellocate();
-            m_cachedGroups.push_back( std::move( group ) );
-            itr = m_localPool.erase( itr );
-        }
-        else
-        {
-            m_oldestLocalEpoch = group.epoch();
-            break;
-        }
-    }
-    return m_localPool.size();
+    // Deallocate.
+    size_t deallocated = m_localPool.deallocate( lastActive );
+    m_statistics.deallocations_completed( deallocated );
+    m_oldestLocalEpoch = lastActive;
 }
 
 
