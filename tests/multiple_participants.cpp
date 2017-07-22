@@ -74,8 +74,8 @@ void multiple_participants::deallocationSucceedsFromMultipleThreadsSucceeds()
             }
 
             // Run cleanup routines.
-            size_t remaining = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
-            QVERIFY( remaining  == 0 );
+            bool allDeallocated = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
+            QVERIFY( allDeallocated );
 
         } );
     }
@@ -172,8 +172,8 @@ void multiple_participants::deallocationAfterExchangingObjectsBetweenThreadsSucc
             }
 
             // Run cleanup routines.
-            size_t remaining = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
-            QVERIFY( remaining  == 0 );
+            bool allDeallocated = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
+            QVERIFY( allDeallocated );
 
         } );
     }

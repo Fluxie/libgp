@@ -21,11 +21,7 @@
 namespace gp
 {
 
-/*!
- * \brief The garbage_pool_participant class
- *
- *
- */
+//! A garbage pool representative.
 class garbage_pool_participant
 {
     //! Storage type for the group pointer.
@@ -40,7 +36,7 @@ public:
         after_update,  //!< Updates the last active epoch before attempting the cleanup. Forces synchronization with the cleanup thread.
     };
 
-    //! Registers the participant
+    //! Registers the participant to the garbage pool.
     garbage_pool_participant(
             std::shared_ptr< garbage_pool > pool
     );
@@ -116,12 +112,13 @@ public:
         m_localPool.append( epoch, std::forward< std::vector< queued_item > >( items ) );
     }
 
-    //! Attempts to clean the local pool.
-    void clean(
+    //! Attempts to clean the local pool. Returns true if all items were deallocated.
+    bool clean(
             cleanup mode = cleanup::known
     );
-    //! Gets the statistics.
-    gp::statistics statistics() const { return gp::statistics( m_statistics ); }
+
+    //! Captures the statistics.
+    gp::statistics statistics() const noexcept { return gp::statistics( m_statistics ); }
 
     //! Accesses the current pool.
     static garbage_pool_participant& current() { return s_threadsPool; }
@@ -139,7 +136,7 @@ private:
 
     atomic_statistics m_statistics;  //!< Collects statistics about the usage.
 
-    static thread_local garbage_pool_participant s_threadsPool;
+    static thread_local garbage_pool_participant s_threadsPool;  //!< Thread's garbage pool participant.
 };
 
 }

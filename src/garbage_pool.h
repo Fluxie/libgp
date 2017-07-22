@@ -23,12 +23,7 @@ namespace gp
 
 class garbage_pool_participant;
 
-/*!
- * \brief The garbage_pool class
- * The objects are put to queue
- * The thread performing the cleanup moves the items from the queue to the actual pool.
- * The cleanup thread then proceeds to process the items in the pool.
- */
+//! Main garbage pool that coordinates the efforts of the participants.
 class garbage_pool : public std::enable_shared_from_this< garbage_pool >
 {
 public:
@@ -41,50 +36,11 @@ public:
 
 private:
 
-    // Groups of objects marked for deallocation.
-    struct group
-    {
-
-        group() :
-            m_epoch( 0 )
-        {
-        }
-
-        group(
-                gp::configuration::epoch_t epoch,
-                std::initializer_list< queued_item > items  //!< Items assigned for dellocation.
-        ) :
-            m_epoch( epoch ),
-            m_items( items )
-        {
-        }
-
-        group(
-                gp::configuration::epoch_t epoch,
-                std::vector< queued_item >&& items  //!< Items assigned for dellocation.
-        ) :
-            m_epoch( epoch )
-        {
-            m_items = std::move( items );
-        }                
-
-
-        //! Deallocates all the items in this group.
-        void dellocate()
-        {
-            // Deallocate.
-            for( queued_item& qi : m_items )
-                qi.m_deallocate( qi.m_object );
-        }
-
-        epoch_t m_epoch;  //!< Epoch when this group can be allocated.
-        std::vector< gp::queued_item > m_items;  //!< Items assigned for dellocation.
-    };
-
     typedef std::list< gp::details::deallocation_group > pool_t;
 
 public:
 
+    //! Initializes a new garbage pool with the given cleanup period.
     garbage_pool(
             cleanup_period_t cleanupPeriod
     );
@@ -100,6 +56,7 @@ public:
     //! Gets the last active epoch.
     epoch_t last_active() const noexcept { return m_lastActive; }
 
+    //! Gets combined statistics from all participants. The combined statistics are update periodically.
     statistics get_statistics() const noexcept { return gp::statistics( m_statistics ); }
 
     //! Registers a pariticpant to the pool.
@@ -142,17 +99,17 @@ private:
 
     std::mutex m_statisticsGuard;  //!< Protects access to the statistics.
     atomic_statistics m_statistics;  //!< Statistics collected from the participants.
-    atomic_statistics m_retiredStatistics;  //!< Statistics collected from retired participants.
+    atomic_statistics m_retiredStatistics;  //!< Statistics collected from the retired participants.
 
     std::mutex m_poolGuard;
     pool_t m_pool;  //!< Objects marked for dellocation that were moved here from the local garbage pool participants.
 
-    std::mutex m_registerGuard;  //!< Protects access to the register guard.
+    std::mutex m_registerGuard;  //!< Protects access to the participant register.
     std::unordered_set< garbage_pool_participant* > m_participants;  //!< Collection of threads registered for transaction framework.
 
-    std::atomic< bool > m_continueCleanup;
-    cleanup_period_t m_cleanupPeriod;
-    std::thread m_cleaner;
+    std::atomic< bool > m_continueCleanup;  //!< True while the cleanup should running.
+    cleanup_period_t m_cleanupPeriod;  //!< Time period for the cleanup routine.
+    std::thread m_cleaner;  //!< A background thread responsible for cleaning objects of retired participants and updating the global epoch.
 
     // Container for hosting the garbage pool.
     static std::once_flag s_poolInitialized;

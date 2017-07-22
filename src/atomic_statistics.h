@@ -10,7 +10,7 @@ namespace gp { class statistics; }
 namespace gp
 {
 
-//! Collects statistics of a pool
+//! Collects statistics about the allocations and deallocations
 class atomic_statistics
 {
 public:
@@ -19,19 +19,19 @@ public:
 
     //! Reports queued deallocations.
     void deallocations_queued(
-            gp::configuration::statistics deallocations
+            gp::configuration::statistics_t deallocations
     )
     {
-        // Add, we do not care about accuracy here only speed.
+        // Add, we do not care about accuracy here, only speed.
         m_queuedDeallocations.fetch_add( deallocations, std::memory_order_relaxed );
     }
 
-    //! Reports completed deallocations.
+    //! Reports completed deallocations. Returns true if the queued objects have been deallocated.
     void deallocations_completed(
-            gp::configuration::statistics deallocations
+            gp::configuration::statistics_t deallocations
     )
     {
-        // Add, we do not care about accuracy here only speed.
+        // Add, we do not care about accuracy here, only speed.
         m_completedDeallocations.fetch_add( deallocations, std::memory_order_relaxed );
     }
 
@@ -45,12 +45,20 @@ public:
             const statistics& s
     );
 
+    //! Checks if all queued objects have been deallocated.
+    bool all_deallocated() const noexcept
+    {
+        bool allDeallocated =
+                ( m_queuedDeallocations.load( std::memory_order_relaxed ) - m_completedDeallocations.load( std::memory_order_relaxed ) ) == 0;
+        return allDeallocated;
+    }
+
 private:
 
     friend class statistics;
 
-    std::atomic< gp::configuration::statistics > m_queuedDeallocations;
-    std::atomic< gp::configuration::statistics > m_completedDeallocations;
+    std::atomic< gp::configuration::statistics_t > m_queuedDeallocations;
+    std::atomic< gp::configuration::statistics_t > m_completedDeallocations;
 };
 
 }

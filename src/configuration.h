@@ -12,16 +12,14 @@ namespace configuration
     //! The assumed size of a cache line in the processor.
     static const size_t cache_line_size = 64;
 
-    static const size_t initial_deallocation_buffer_size = 1024;
-
-    //! The number of items stored in a single deallocation group.
-    static const size_t deallocation_group_size = 2048;
+    //! TThe size of a single deallocation group in bytes.
+    static const size_t deallocation_group_size = 4096;
 
     //! Defines the variable for storing the epoch used track the safe zoners for each thread.
-    typedef uint64_t epoch_t;
+    typedef int64_t epoch_t;
 
     //! Defines the type for storing statistics.
-    typedef size_t statistics;
+    typedef int64_t statistics_t;
 
     //! Defines how the garbage pools are managed.
     enum class hosting_method : std::size_t

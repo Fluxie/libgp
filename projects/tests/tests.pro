@@ -18,7 +18,11 @@ SOURCES += main.cpp \
     ../../src/garbage_pool.cpp \
     ../../src/garbage_pool_participant.cpp \
     ../../tests/single_participant.cpp \
-    ../../tests/multiple_participants.cpp
+    ../../tests/multiple_participants.cpp \
+    ../../src/atomic_statistics.cpp \
+    ../../src/details/deallocation_buffer.cpp \
+    ../../src/details/deallocation_group.cpp \
+    ../../src/statistics.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -41,4 +45,6 @@ HEADERS += \
     ../../src/queued_item.h \
     ../../tests/details/d_wrapper.h \
     ../../testd.h \
-    ../../tests/multiple_participants.h
+    ../../tests/multiple_participants.h \
+    ../../src/atomic_statistics.h \
+    ../../src/statistics.h

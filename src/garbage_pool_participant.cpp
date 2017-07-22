@@ -42,8 +42,7 @@ void garbage_pool_participant::safe_zone()
     m_localEpoch = m_pool->epoch();
 }
 
-//! Attempts to clean the local pool.
-void garbage_pool_participant::clean(
+bool garbage_pool_participant::clean(
         cleanup mode
 )
 {
@@ -54,12 +53,14 @@ void garbage_pool_participant::clean(
     // Check the olders epoch quickly.
     garbage_pool::epoch_t lastActive = m_pool->last_active();
     if( m_oldestLocalEpoch > lastActive )
-        return;
+        return m_statistics.all_deallocated();
 
     // Deallocate.
     size_t deallocated = m_localPool.deallocate( lastActive );
     m_statistics.deallocations_completed( deallocated );
     m_oldestLocalEpoch = lastActive;
+
+    return m_statistics.all_deallocated();
 }
 
 

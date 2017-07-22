@@ -8,6 +8,7 @@ namespace gp
 
 class atomic_statistics;
 
+//! A container for the statistics collected from the garbage pool.
 class statistics
 {
 public:
@@ -17,14 +18,16 @@ public:
             const atomic_statistics& as
     );
 
-    gp::configuration::statistics queued_dellocations() const { return m_queuedDeallocations; }
+    //! Gets the number items queued for deallocation.
+    gp::configuration::statistics_t queued_dellocations() const { return m_queuedDeallocations; }
 
-    gp::configuration::statistics completed_dellocations() const { return m_completedDeallocations; }
+    //! Gets the number of items deallocated.
+    gp::configuration::statistics_t completed_dellocations() const { return m_completedDeallocations; }
 
 private:
 
-    gp::configuration::statistics m_queuedDeallocations;
-    gp::configuration::statistics m_completedDeallocations;
+    gp::configuration::statistics_t m_queuedDeallocations;
+    gp::configuration::statistics_t m_completedDeallocations;
 };
 
 }

@@ -12,7 +12,6 @@ deallocation_group::deallocation_group()
 {  
 }
 
-//! Appends new items for deallocation.
 size_t deallocation_group::append(
         gp::configuration::epoch_t epoch,
         gp::details::deallocation_group_header& header,
@@ -32,7 +31,6 @@ size_t deallocation_group::append(
     return last - items.begin();
 }
 
-//! Appends new items for deallocation. Returns true if the group becomes full.
 size_t deallocation_group::append(
         gp::configuration::epoch_t epoch,
         gp::details::deallocation_group_header& header,

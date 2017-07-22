@@ -1,0 +1,5 @@
+# Hidden file used by Doplhin
+.directory
+
+# Build artifacts
+projects/build*

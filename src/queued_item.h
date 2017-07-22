@@ -2,6 +2,7 @@
 #define GP_QUEUED_ITEM_H
 
 #include <type_traits>
+#include <xmmintrin.h>
 
 #include "details/has_deallocate.h"
 
@@ -35,7 +36,7 @@ struct queued_item
         return queued_item( item, &queued_item::deallocate_object< t_item > );
     }
 
-    //! Queues an item with deallocate method.
+    //! Queues an item without deallocate method using regular delete.
     template< typename t_item, typename = std::enable_if_t< gp::details::has_deallocate< t_item, void >::value == false > >
     static auto create(
             t_item* item
@@ -43,19 +44,6 @@ struct queued_item
     {
         return queued_item( item, &queued_item::delete_object< t_item > );
     }
-
-//    //! Queues an item with deallocate method.
-//    template< typename t_item >
-//    static queued_item create(
-//            t_item* item,
-//            std::enable_if< gp::details::has_deallocate< t_item, void >::value >::type
-//    )
-//    {
-//        if( gp::details::has_deallocate< t_item, void >::value )
-//            return queued_item( item, [] ( void* d ) -> void { static_cast< t_item* >( d )->deallocate(); } );
-//        else
-//            return queued_item( item, [] ( void* d ) -> void { static_cast< t_item* >( d )->~t_item(); } );
-//    }
 
     queued_item() :
         m_object( nullptr ),
@@ -72,7 +60,7 @@ struct queued_item
     }
 
     void* m_object;  //!< Object which is queued for dellocation
-    void ( *m_deallocate )( void* );  //!< Function which dellocates the object.
+    void ( *m_deallocate )( void* );  //!< Function which dellocates the object.   
 };
 
 

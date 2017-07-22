@@ -14,7 +14,7 @@ class CustomData
 public:
 
     //! Varint type holding the possible values.
-    typedef std::variant< uint64_t, uint32_t > t_value;
+    typedef std::variant< int64_t, int32_t > t_value;
 
     //! Named value.
     typedef std::tuple< std::string, t_value > t_named_value;

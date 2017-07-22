@@ -25,8 +25,8 @@ void single_participant::deallocatingOneObjectSucceeds()
     gp::pool().safe_zone();
 
     // Clean.
-    size_t remaining = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
-    QVERIFY( remaining  == 0 );
+    bool allDeallocated = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
+    QVERIFY( allDeallocated );
 }
 
 
@@ -44,8 +44,8 @@ void single_participant::deletingOneObjectSucceeds()
     gp::pool().safe_zone();
 
     // Clean.
-    size_t remaining = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
-    QVERIFY( remaining  == 0 );
+    bool allDeallocated = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
+    QVERIFY( allDeallocated );
 }
 
 //! Verifies that deleting multiple objects succeeds.
@@ -64,8 +64,8 @@ void single_participant::deletingMultipleObjectsSucceeds()
     gp::pool().safe_zone();
 
     // Clean.
-    size_t remaining = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
-    QVERIFY( remaining  == 0 );
+    bool allDeallocated = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
+    QVERIFY( allDeallocated );
 }
 
 //! Verifies that mixing deallocation types succeeds.
@@ -84,8 +84,8 @@ void single_participant::mixingDeallocationTypesSucceeds()
     gp::pool().safe_zone();
 
     // Clean.
-    size_t remaining = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
-    QVERIFY( remaining  == 0 );
+    bool allDeallocated = gp::pool().clean( garbage_pool_participant::cleanup::after_update );
+    QVERIFY( allDeallocated );
 }
 
 }

@@ -16,7 +16,7 @@ namespace gp
     //! Registers the current thread for the garbage pool.
     inline void register_thread() { garbage_pool::global()->register_participant( &pool() ); }
 
-    //! The thread has reached a safe-zone.
+    //! The thread has reached a safe-zone and is not holding any references to dynamically allocated items.
     inline void safe_zone() { pool().safe_zone(); }
 
     //! Gets statistics of the current thread.

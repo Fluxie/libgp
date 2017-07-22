@@ -23,31 +23,39 @@ private:
     //! Maximum number of items stored in one group.
     static constexpr size_t maximum_item_count = buffer_size / sizeof( queued_item );
 
+    //! Buffer type for storing the items queued for dellocation.
     union buffer {
-        unsigned char bufferSize[ buffer_size ];
+        unsigned char bufferSize[ buffer_size ];  //!< Defines the size of the buffer.
         gp::queued_item items[ maximum_item_count ];
 
+        //! The number of items in the buffer is tracked separately and we don't need to initialize the buffer to zero.
         buffer() {}
     };
 
 public:
 
+    //! Initializes a new empty dellocation group.
     deallocation_group();
 
     //! Returns the epoch of the group.
     gp::configuration::epoch_t epoch() const noexcept { return m_header.epoch(); }
 
-    //! Resets the groups.
-    void reset() noexcept { m_header.clear(); }
+    //! Resets the group to zero size.
+    void reset(
+            deallocation_group* next  //!< Group deallocated after this group.
+    ) noexcept
+    {
+        m_header.reset( next );
+    }
 
-    //! Appends new items for deallocation. Returns true if the group becomes full.
+    //! Appends new items for deallocation. Returns the number of appended objects.
     size_t append(
             gp::configuration::epoch_t epoch,
             gp::details::deallocation_group_header& header,
             std::initializer_list< queued_item > items
     );
 
-    //! Appends new items for deallocation. Returns the number of appended
+    //! Appends new items for deallocation. Returns the number of appended objects.
     size_t append(
             gp::configuration::epoch_t epoch,
             gp::details::deallocation_group_header& header,
@@ -84,26 +92,31 @@ public:
             gp::queued_item& qi = m_buffer.items[ i ];
             qi.m_deallocate( qi.m_object );
         }
-
         size_t count = m_header.size();
-        m_header.clear();
+        reset( nullptr );
         return count;
     }
 
     //! Deallocates all the items in this group. Assumes the group is full.
     size_t dellocate_full() noexcept
     {
-        // Deallocate.
+        // Deallocate the whole buffer.
         for( size_t st = 0; st < maximum_item_count ; ++st )
         {
             gp::queued_item& qi = m_buffer.items[ st ];
             qi.m_deallocate( qi.m_object );
         }
-        m_header.clear();
+
+        // When a full group is deallocated the dellocation algorithm needs to
+        // check if the next group can be deallocated as well.
+        // This involves reading the groups header.
+        // We can speed up this operation by ensuring it is available when needed.
+        m_header.prefetch_next();
+
         return gp::configuration::deallocation_group_size ;        
     }
 
-// Support moves.
+// Prevent moves.
 public:
 
     deallocation_group(
@@ -129,7 +142,7 @@ public:
 
 private:
 
-    //! Returns a referencto to an item.
+    //! Returns a referencto to an item in the buffer.
     queued_item& operator[](
             int index
     ) noexcept
@@ -139,7 +152,7 @@ private:
 
 private:
 
-    deallocation_group_header m_header;
+    deallocation_group_header m_header;  //!< Information about the group including the number of queued items in the buffer.
     buffer m_buffer;  //!< Items marked for dellocation.
 };
 

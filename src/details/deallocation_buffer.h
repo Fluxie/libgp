@@ -23,21 +23,21 @@ public:
 
     ~deallocation_buffer();
 
-    //! Appends new items for deallocation. Returns true if the group becomes full.
+    //! Appends new items for deallocation.
     void append(
             gp::configuration::epoch_t epoch,
             std::initializer_list< queued_item > items
     );
 
-    //! Appends new items for deallocation. Returns the number of appended
+    //! Appends new items for deallocation.
     void append(
             gp::configuration::epoch_t epoch,
             std::vector< queued_item >&& items
     );
 
-    //! Deallocates all groups in the buffer. Returns the epoch of the oldest group.
+    //! Deallocates all groups in the buffer. Returns the number deallocations that took place.
     size_t deallocate(
-            gp::configuration::epoch_t& lastActive  //!< Epoch of the oldest active thread.
+            gp::configuration::epoch_t lastActive  //!< Epoch of the oldest active thread.
     );
 
 private:
@@ -47,7 +47,7 @@ private:
 
     //! Frees all groups in the given collection.
     static void freeGroups(
-            groups_t  groupsToFree
+            groups_t&  groupsToFree
     );
 
 private:
