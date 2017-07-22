@@ -22,7 +22,6 @@ garbage_pool::~garbage_pool()
     m_cleaner.join();
 }
 
-
 //! Dellocates all eglible items in the pool
 void garbage_pool::clean()
 {
@@ -34,7 +33,11 @@ void garbage_pool::clean()
     }
 
     // Perform the actual cleanup.
+    {
+        std::unique_lock<std::mutex>( m_poolGuard );
 
+        m_globalPool.deallocate( m_lastActive );
+    }
 }
 
 //! Registers a pariticpant to the pool.
@@ -52,13 +55,24 @@ void garbage_pool::unregister_participant(
         garbage_pool_participant* participant  //!< Unregistered participant.
 )
 {
-    std::unique_lock<std::mutex> lock( m_registerGuard );
+    {
+        std::unique_lock<std::mutex>( m_registerGuard );
 
-    m_participants.erase( participant );
+        m_participants.erase( participant );
 
-    // Update statistics.
-    statistics s = participant->statistics();
-    m_retiredStatistics.fetch_add( s );
+        // Update statistics.
+        statistics s = participant->statistics();
+        m_retiredStatistics.fetch_add( s );
+    }
+
+    // Merge deallocation groups from the participants to us.
+    {
+        std::unique_lock<std::mutex>( m_poolGuard );
+
+        m_globalPool.splice( &participant->m_localPool );
+
+        m_globalPool.trim();
+    }
 }
 
 //! Accesses the global garbage pool.
@@ -78,7 +92,7 @@ void garbage_pool::update_last_active()
 
     // Determine the oldest epoch of the participants.
     {
-        std::unique_lock<std::mutex> lock( m_registerGuard );
+        std::unique_lock<std::mutex>( m_registerGuard );
 
         m_statistics.reset( m_retiredStatistics );
         for( auto& participant : m_participants )
@@ -111,6 +125,9 @@ void garbage_pool::cleanup_routine(
     {
         // Update the last active participant.
         thisPool->update_last_active();
+
+        // Try cleaning.
+        thisPool->clean();
 
         // Wait.
         std::this_thread::sleep_for( thisPool->m_cleanupPeriod );

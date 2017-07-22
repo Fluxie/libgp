@@ -14,6 +14,7 @@
 
 #include "atomic_statistics.h"
 #include "configuration.h"
+#include "details/deallocation_buffer.h"
 #include "details/deallocation_group.h"
 #include "queued_item.h"
 #include "statistics.h"
@@ -33,10 +34,6 @@ public:
 
     //! Period for the cleanup routine.
     typedef std::chrono::duration< uint32_t, std::milli > cleanup_period_t;
-
-private:
-
-    typedef std::list< gp::details::deallocation_group > pool_t;
 
 public:
 
@@ -102,7 +99,7 @@ private:
     atomic_statistics m_retiredStatistics;  //!< Statistics collected from the retired participants.
 
     std::mutex m_poolGuard;
-    pool_t m_pool;  //!< Objects marked for dellocation that were moved here from the local garbage pool participants.
+    gp::details::deallocation_buffer m_globalPool;  //!< Objects marked for dellocation that were moved here from the local garbage pool participants.
 
     std::mutex m_registerGuard;  //!< Protects access to the participant register.
     std::unordered_set< garbage_pool_participant* > m_participants;  //!< Collection of threads registered for transaction framework.

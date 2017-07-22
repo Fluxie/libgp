@@ -54,7 +54,7 @@ void multiple_participants::deallocationSucceedsFromMultipleThreadsSucceeds()
                 deallocationVariable.wait( lock, [ &readCount, &participantCount ] () -> bool { return readCount == participantCount; } );
 
                 // Wunregister_participante have finished so everybody else must be too.
-                deallocationVariable.notify_one();
+                deallocationVariable.notify_all();
             }
 
             gp::pool().safe_zone();
@@ -70,7 +70,7 @@ void multiple_participants::deallocationSucceedsFromMultipleThreadsSucceeds()
                         { return safeZoneUpdates == participantCount; } );
 
                 // We have finished so everybody else must be too.
-                deallocationVariable.notify_one();
+                deallocationVariable.notify_all();
             }
 
             // Run cleanup routines.
@@ -152,7 +152,7 @@ void multiple_participants::deallocationAfterExchangingObjectsBetweenThreadsSucc
                         { return objectsDeallocated == participantCount; } );
 
                 // We have finished so everybody else must be too.
-                progress.notify_one();
+                progress.notify_all();
             }
 
             gp::safe_zone();
@@ -168,7 +168,7 @@ void multiple_participants::deallocationAfterExchangingObjectsBetweenThreadsSucc
                         { return safeZoneUpdates == participantCount; } );
 
                 // We have finished so everybody else must be too.
-                progress.notify_one();
+                progress.notify_all();
             }
 
             // Run cleanup routines.

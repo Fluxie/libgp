@@ -6,6 +6,8 @@
 
 #include <list>
 
+namespace gp { class garbage_pool; }
+
 namespace gp { namespace details
 {
 
@@ -35,9 +37,36 @@ public:
             std::vector< queued_item >&& items
     );
 
+    //! Appends items to the group.
+    template< typename t_iterator >
+    void append(
+            gp::configuration::epoch_t epoch,
+            t_iterator begin,
+            t_iterator end
+    )
+    {
+        for( t_iterator itr = begin; itr != end; )
+        {
+            // Append to current group.
+            itr = itr + m_currentGroup->append( epoch, itr, end );
+
+            // Did we fill the group?
+            if( itr != end )
+                rotate_group();
+        }
+    }
+
     //! Deallocates all groups in the buffer. Returns the number deallocations that took place.
     size_t deallocate(
             gp::configuration::epoch_t lastActive  //!< Epoch of the oldest active thread.
+    );
+
+    //! Clears the empty group buffer.
+    void trim() noexcept;
+
+    //! Merges the groups to this collection
+    void splice(
+            deallocation_buffer* other
     );
 
 private:
@@ -50,9 +79,9 @@ private:
             groups_t&  groupsToFree
     );
 
-private:
+private:       
 
-    deallocation_group* m_currentGroup;  //!< Array of groups waiting for deallocation.
+    deallocation_group* m_currentGroup;  //!< Current group where objects marked for dellocation are collected.
     groups_t m_fullGroups;  //!< A collection of full groups.
     groups_t m_freeGroups;  //!< Groups that have been allocated earlier whih are now free.
 };

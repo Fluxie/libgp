@@ -37,6 +37,12 @@ public:
     //! Initializes a new empty dellocation group.
     deallocation_group();
 
+    //! Gets pointer to the beginning of objects marked for deallocation.
+    gp::queued_item* begin() noexcept { return m_buffer.items; }
+
+    //! Gets pointer to the end of the objects marked for deallocation.
+    gp::queued_item* end() noexcept { return m_buffer.items + m_header.size(); }
+
     //! Returns the epoch of the group.
     gp::configuration::epoch_t epoch() const noexcept { return m_header.epoch(); }
 

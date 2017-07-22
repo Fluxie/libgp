@@ -125,6 +125,12 @@ public:
 
 private:
 
+    gp::details::deallocation_buffer& buffer() noexcept { return m_localPool; }
+
+private:
+
+    friend class garbage_pool;
+
     //! Initializes the participant and associated the participant with the global pool.
     garbage_pool_participant();
 

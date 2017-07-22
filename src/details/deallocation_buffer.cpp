@@ -19,8 +19,7 @@ deallocation_buffer::deallocation_buffer() :
 
 deallocation_buffer::~deallocation_buffer()
 {
-    if( m_currentGroup != nullptr )
-        free( m_currentGroup );
+    free( m_currentGroup );
     for( deallocation_group* d : m_fullGroups )
         d->dellocate();
     freeGroups( m_fullGroups );
@@ -96,6 +95,25 @@ size_t deallocation_buffer::deallocate(
     }
 
     return deallocations;
+}
+
+void deallocation_buffer::trim() noexcept
+{
+    freeGroups( m_freeGroups );
+}
+
+void deallocation_buffer::splice(
+        deallocation_buffer* other
+)
+{
+    // Move all groups that may have members to the target.
+    m_fullGroups.splice( m_fullGroups.end(), other->m_fullGroups );
+    m_freeGroups.splice( m_freeGroups.end(), other->m_freeGroups );
+    append( other->m_currentGroup->epoch(), other->m_currentGroup->begin(), other->m_currentGroup->end() );
+
+    other->m_fullGroups.clear();
+    other->m_freeGroups.clear();
+    other->m_currentGroup->reset( nullptr );
 }
 
 void deallocation_buffer::rotate_group()
